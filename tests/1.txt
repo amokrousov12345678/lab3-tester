@@ -1,0 +1,6 @@
+Hello message
+add 1
+add 2 1
+check 1 2
+check 2 1
+check 1 2
