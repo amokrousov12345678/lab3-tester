@@ -3,15 +3,16 @@
 2.) После всех стадий сборки (в разделе stages) добавить
 
 ````
-    stages:
-      <....>
+stages:
+  <....>
     - testEnvInit
     - test
 ````
 
 3.) Добавить описания задач тестирования:
 
-<code>
+
+````
 testEnvInit:  
   stage: testEnvInit  
   artifacts:  
@@ -38,6 +39,6 @@ test:
     - python3 env_test.py  
     - python3 tester.py 1 {java -cp ../  edu.amokrousov.udp_tree.Main}  
 </code>
-
+````
 Вместо фигурных скобок и их содержимого необходимо написать строку запуска программы, считая, что текущий каталог repo_root/lab3-tester 
 (ну то есть .. в путь надо добавить или что-то подобное)
