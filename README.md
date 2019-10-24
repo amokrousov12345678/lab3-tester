@@ -3,10 +3,10 @@
 2.) После всех стадий сборки (в разделе stages) добавить
 
 <code>
-stages:  
-  <....>  
-- testEnvInit  
-- test  
+    stages:  
+      <....>  
+    - testEnvInit  
+    - test  
 </code>
 
 3.) Добавить описания задач тестирования:
