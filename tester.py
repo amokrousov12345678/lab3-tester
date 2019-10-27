@@ -35,13 +35,18 @@ VERBOSE = 1
 nodes = {}
 
 
-error_codes = {ESUCCESS: "OK", EDUPMSG: "Msg duplicated", ELOSTMSG: "Msg lost", EINVALIDTEST: "Test is invalid"}
+error_codes = {ESUCCESS: "OK", EDUPMSG: "Msg duplicated", ELOSTMSG: "Msg lost", EEXTRAMSG: "Unexpected message in output", EINVALIDTEST: "Test is invalid"}
+
+prog_response = ""
+expected_response = ""
 
 def cleanup(nodes):
 	for item in nodes:
 		nodes[item].kill()
 
 def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_msg):
+	global prog_response
+	global expected_response
 	if cmd_params[0]=="add" or cmd_params[0]=="add_instant":
 		my_id = int(cmd_params[1])
 		par_id = None
@@ -94,7 +99,8 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
 				return EINVALIDTEST
 		nodes[from_id].stdin.write(send_msg.encode("utf-8"))
 		nodes[from_id].stdin.flush()
-		expected_response = (NAME_PREFIX+str(from_id)+": "+send_msg).encode("utf-8")
+		expected_response = NAME_PREFIX+str(from_id)+": "+send_msg
+		expected_response = expected_response.rstrip()
 
 		poller = select.poll()
 
@@ -113,17 +119,19 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
 				
 				if(event!=select.POLLIN): 
 					continue
-				line = fd_to_stream[fd].readline()
-				if (line[0:8]!=b'--------'):
+				line = fd_to_stream[fd].readline().decode("utf-8")
+				if (line[0:8]!='--------'):
 					continue
-				
-				if (line[8:]!=expected_response):
+				prog_response = line[8:]
+				prog_response = prog_response.rstrip().rstrip('\x00')
+				if (prog_response!=expected_response):
 					return EEXTRAMSG
 				if (fd in received_acks):
 					return EDUPMSGS
 				received_acks[fd] = 1
 				if (verbosity):
 					print("Ack from "+str(fd_to_nodeid[fd]), end=" ")
+					sys.stdout.flush()
 
 		for node_id in to_ids:
 			if not nodes[node_id].stdout.fileno() in received_acks:
@@ -150,6 +158,9 @@ def check_test(fname, verbosity):
 			verdict = do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_msg)
 			if (verbosity==VERBOSE):
 				print(error_codes[verdict])
+				if (verdict==EEXTRAMSG):
+					print("	Expected: "+str(expected_response))
+					print("	Found:	"+str(prog_response))
 			if (verdict!=ESUCCESS):
 				errno = verdict
 				break
@@ -164,11 +175,13 @@ def main():
 	signal.signal(signal.SIGINT, sig_int_callback)
 	verbosity = int(sys.argv[1])
 	failed = False
-	for entry in os.listdir("tests/"):
+	test_list = os.listdir(TESTS_DIR)
+	test_list.sort()
+	for entry in test_list:
 		if (verbosity==VERBOSE):
-			print("Processing test"+entry+"...")
+			print("Processing test "+entry+"...")
 		else:
-			print("Processing test"+entry+"...", end =" ")
+			print("Processing test "+entry+"...", end =" ")
 			
 		sys.stdout.flush()
 		verdict = check_test(TESTS_DIR+entry, verbosity)
