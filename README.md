@@ -1,6 +1,19 @@
-1.) Докерный образ должен поддерживать apt-get (то есть debian-подобный линух. openjdk:9 точно пойдёт, дефолтный образ с maven не тестил)
+# lab3-tester
+Automated tester for a chat tree (laboratory work for [Network technologies](http://fit.ippolitov.me/CN_2/2019/3.html) course of [FIT NSU](https://www.nsu.ru/n/information-technologies-department/))
 
-2.) После всех стадий сборки (в разделе stages) добавить
+A chat tree should maintain connected tree structure and transfer messages using it. When some node isn't alive, connectivity should be restored automatically.
+This tool executes some scripts (defined in ````TESTS_DIR``` directory) and checks if program works correctly (delivers messages, without duplication)
+
+# Scripts commands
+* ```add ID [PARENT]``` - add node with given ```ID``` (and ```PARENT``` if specified). Waits ```NODES_CREATION_TIMEOUT``` after operation
+* ```add_instant ID [PARENT]``` - same as ```add``` but without timeout after operation
+* ```kill ID``` - kill node. Waits ```NODES_DELETION_TIMEOUT``` after operation
+* ```check ID ID1 [ID2 ID3 ...]``` - check if message sent from ```ID``` node received on ```ID1```, ```ID2``` and so on. Waits at most ```DELIVERY_WAIT_TIMEOUT```
+* any other command is ignored
+
+## How to add tool to Gitlab CI
+1.) Ensure that base docker image supports ```apt-get``` (openjdk:9 is ok)
+2.) Add after all stages (in ```stages``` section) following steps
 
 ````
 stages:
@@ -9,7 +22,7 @@ stages:
     - test
 ````
 
-3.) Добавить описания задач тестирования:
+3.) Define testing steps
 
 
 ````
@@ -39,9 +52,8 @@ test:
     - python3 env_test.py  
     - python3 tester.py 1 {java -cp ../  edu.amokrousov.udp_tree.Main}  
 ````
-Вместо фигурных скобок и их содержимого необходимо написать строку запуска программы, считая, что текущий каталог repo_root/lab3-tester (ну то есть .. в путь надо добавить или что-то подобное)  
+Write command to run tested program in braces, considering current directory as ```repo_root/lab3-tester``` (usually it means you need to add ```..``` to path)
 
-4.) Требования к программе:  
-* печатать сообщения в виде -------Username: message  
-* сообщения без префикса ------- игнорируются (но если будет очень много мусора, тестер может подавиться)  
-* параметры: USERNAME LISTENPORT LOSSES PARENT_IP PARENT_PORT  
+4.) Tested program should meet the following requirements:  
+* All messages should have format ```-------Username: message``` (messages without prefix ```-------``` are ignored by tester)
+* Command line arguments should be in the following order: ```USERNAME LISTENPORT LOSSES PARENT_IP PARENT_PORT```
