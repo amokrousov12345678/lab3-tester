@@ -21,6 +21,7 @@ NODES_CREATION_TIMEOUT = 2
 NODES_DELETION_TIMEOUT = 15
 DELIVERY_WAIT_TIMEOUT = 10
 POLL_TIMEOUT = 1
+MESSAGE_PREFIX = "--------"
 
 BASE_PORT = 2000
 
@@ -124,9 +125,9 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
                 if (event != select.POLLIN):
                     continue
                 line = fd_to_stream[fd].readline().decode("utf-8")
-                if (line[0:8] != '--------'):
+                if (line[0:len(MESSAGE_PREFIX)] != MESSAGE_PREFIX):
                     continue
-                prog_response = line[8:]
+                prog_response = line[len(MESSAGE_PREFIX):]
                 prog_response = prog_response.rstrip().rstrip('\x00')
                 if (prog_response != expected_response):
                     return EEXTRAMSG
