@@ -60,11 +60,10 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
 
         if verbosity == VERBOSE:
             if par_id != None:
-                print("	Add node "+str(my_id)+" to parent " +
-                      str(par_id)+"...", end=" ")
+                print(f"	Add node {my_id} to parent {par_id}...", end=" ")
                 sys.stdout.flush()
             else:
-                print("	Add node "+str(my_id)+"...", end=" ")
+                print(f"	Add node {my_id}...", end=" ")
                 sys.stdout.flush()
 
         if my_id in nodes:
@@ -96,18 +95,16 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
         to_ids = [int(x) for x in cmd_params[2:]]
 
         if (verbosity == VERBOSE):
-            print("	Check connectivity from node " +
-                  str(from_id)+" to ", end=" ")
-            print(*(cmd_params[2:]), end=" ")
-            print("...", end=" ")
+            print(f"	Check connectivity from node {from_id} to {(*(cmd_params[2:]),)}...", end=" ")
             sys.stdout.flush()
 
         if not from_id in nodes:
             print("Attempt to check connectivity from nonexisting node,", end=" ")
             return EINVALIDTEST
+
         nodes[from_id].stdin.write(send_msg.encode("utf-8"))
         nodes[from_id].stdin.flush()
-        expected_response = NAME_PREFIX+str(from_id)+": "+send_msg
+        expected_response = f"{NAME_PREFIX}{from_id}: {send_msg}"
         expected_response = expected_response.rstrip()
 
         poller = select.poll()
@@ -137,7 +134,7 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
                     return EDUPMSGS
                 received_acks[fd] = 1
                 if (verbosity):
-                    print("Ack from "+str(fd_to_nodeid[fd]), end=" ")
+                    print(f"Ack from {fd_to_nodeid[fd]}", end=" ")
                     sys.stdout.flush()
 
         for node_id in to_ids:
@@ -146,7 +143,7 @@ def do_test_cmd(cmd_params, nodes, fd_to_stream, fd_to_nodeid, verbosity, send_m
     elif cmd_params[0] == "kill":
         node_id = int(cmd_params[1])
         if (verbosity == VERBOSE):
-            print("	Kill node "+str(node_id)+"...", end=" ")
+            print(f"	Kill node {node_id}...", end=" ")
             sys.stdout.flush()
         nodes.pop(node_id).send_signal(signal.SIGINT)
         time.sleep(NODES_DELETION_TIMEOUT)
@@ -168,8 +165,8 @@ def check_test(fname, verbosity):
             if (verbosity == VERBOSE):
                 print(error_codes[verdict])
                 if (verdict == EEXTRAMSG):
-                    print("	Expected: "+str(expected_response))
-                    print("	Found:	"+str(prog_response))
+                    print(f"	Expected: {expected_response}")
+                    print(f"	Found:	{prog_response}")
             if (verdict != ESUCCESS):
                 errno = verdict
                 break
@@ -190,9 +187,9 @@ def main():
     test_list.sort()
     for entry in test_list:
         if (verbosity == VERBOSE):
-            print("Processing test "+entry+"...")
+            print(f"Processing test {entry}...")
         else:
-            print("Processing test "+entry+"...", end=" ")
+            print(f"Processing test {entry}...", end=" ")
 
         sys.stdout.flush()
         verdict = check_test(TESTS_DIR+entry, verbosity)
